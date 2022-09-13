@@ -11,6 +11,8 @@ const { v4: uuidv4 } = require('uuid');
 
 const client = new S3Client({ region: process.env.AWS_REGION });
 const s3Bucket = process.env.AWS_S3_BUCKET_NAME;
+//const bucketPrefix = 'test-public/';
+const bucketPrefix = 'hospital_photos/';
 
 const generateUploadUrl =  ({ type }) => {
   /**
@@ -21,7 +23,7 @@ const generateUploadUrl =  ({ type }) => {
   const expiresInMinutes = 1;
   return createPresignedPost(client, {
     Bucket: s3Bucket,
-    Key: `test-public/${name}`,
+    Key: `${bucketPrefix}${name}`,
     Expires: expiresInMinutes * 60, // the url will only be valid for 1 minute
     Conditions: [["eq", "$Content-Type", type]],
   });
@@ -30,7 +32,7 @@ const generateUploadUrl =  ({ type }) => {
 const listObjects = () => {
   const input = {
     Bucket: s3Bucket,
-    Prefix: 'test-public/',
+    Prefix: bucketPrefix,
   }
   const command = new ListObjectsV2Command(input);
   return client.send(command);
@@ -70,6 +72,7 @@ router.get("/get-files", (req, res) => {
   listObjects()
   .then(async (data) => {
     const { Contents } = data;
+    // return JSON.stringify(data,null,2);
     return Promise.all(Contents.map((item) => getFileUrl(item.Key)));
   })
   .then((data) => {
